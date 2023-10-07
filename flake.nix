@@ -1,24 +1,33 @@
 {
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+  inputs = { nixpkgs.url = "github:nixos/nixpkgs"; };
 
   outputs = { self, nixpkgs }:
     let
-      supportedSystems = [ "x86_64-linux" "x86_64-darwin" "aarch64-linux" "aarch64-darwin" ];
-      forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
-      pkgs = forAllSystems (system: nixpkgs.legacyPackages.${system});
-    in
-    {
-      packages = forAllSystems (system: {
-        default = pkgs.${system}.poetry2nix.mkPoetryApplication { projectDir = self; };
-      });
-
-      devShells = forAllSystems (system: {
-        default = pkgs.${system}.mkShellNoCC {
-          packages = with pkgs.${system}; [
-            (poetry2nix.mkPoetryEnv { projectDir = self; })
-            poetry
-          ];
+      pkgs = nixpkgs.legacyPackages.aarch64-darwin;
+      pythonPackages = with pkgs.python3Packages; [
+        asn1crypto
+        bcrypt
+        cffi
+        colorama
+        cryptography
+        enum34
+        idna
+        # ipaddress
+        paramiko
+        prompt-toolkit
+        pyasn1
+        pycparser
+        pygments  # Changed to lowercase
+        pynacl    # Changed to lowercase
+        scp
+        six
+        tqdm
+        wcwidth
+      ];
+    in {
+      devShell.aarch64-darwin =
+        pkgs.mkShell {
+          buildInputs = [ pkgs.cowsay pkgs.frida-tools ] ++ pythonPackages;  # Moved frida-tools to top level
         };
-      });
     };
 }
